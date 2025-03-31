@@ -57,19 +57,12 @@ The Random Forest model demonstrated the best overall performance with:
 
 ```
 news-popularity-prediction/
-├── data/                 
-│   └── OnlineNewsPopularity.csv  # Dataset file
+├── setup.R               # Setup file with package installation and data loading
 ├── src/                   
 │   ├── logistic_models.R   # Logistic regression variants
 │   ├── knn_analysis.R      # KNN implementation
 │   ├── random_forest.R     # Random Forest implementation
 │   └── neural_networks.R   # Neural network models
-├── analysis/              
-│   ├── data_exploration.R  # Exploratory data analysis
-│   ├── model_comparison.R  # Comparative analysis of models
-│   └── visualization.R     # Visualization functions
-├── examples/              
-│   └── run_models.R        # Example script to run all models
 └── README.md              # Project documentation
 ```
 
@@ -89,16 +82,17 @@ This project requires R with the following packages:
 
 ## Usage
 
-To run the full analysis:
+To run the analysis:
 
 ```r
-# Install required packages
-install.packages(c("glmnet", "pROC", "class", "rpart", "rpart.plot", 
-                  "randomForest", "caret", "PRROC", "knitr", 
-                  "kableExtra", "neuralnet", "h2o"))
+# First, run the setup file to install packages and load data
+source("setup.R")
 
-# Run main analysis
-source("examples/run_models.R")
+# Then run individual model files as needed
+source("src/logistic_models.R")
+source("src/knn_analysis.R")
+source("src/random_forest.R")
+source("src/neural_networks.R")
 ```
 
 ## Future Work
