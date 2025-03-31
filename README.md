@@ -104,7 +104,7 @@ Two distinct clusters of countries emerged based on voting patterns, with PCA re
 
 ## License
 
-This repository is licensed under the MIT License - see the LICENSE file for details.
+This repository is licensed under the AGPL License - see the LICENSE file for details.
 
 ## Acknowledgments
 
