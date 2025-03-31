@@ -1,4 +1,4 @@
-# Big Data Analysis for Economics and Finance
+# Big Data Analysis 
 
 This repository contains multiple data analysis projects focused on applying big data techniques to economic and financial data. Each project demonstrates different methodologies and approaches for extracting insights from large datasets.
 
