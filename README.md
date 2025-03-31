@@ -1,10 +1,10 @@
-# Big Data Analysis
+# Big Data Analysis for Economics and Finance
 
 This repository contains multiple data analysis projects focused on applying big data techniques to economic, financial, and political data. Each project demonstrates different methodologies and approaches for extracting insights from large datasets.
 
 ## Projects
 
-### 1. News Popularity Classification
+### 1. Classification: News Popularity Prediction
 
 A machine learning project that implements various classification algorithms to predict whether online news articles will become popular (receive more than 1,000 shares).
 
@@ -14,9 +14,9 @@ A machine learning project that implements various classification algorithms to 
 - Random Forest
 - Neural Networks
 
-[Go to project →](./news-popularity-classification/)
+[Go to project →](./classification/)
 
-### 2. News Popularity Regression Analysis
+### 2. Regression: News Popularity Analysis
 
 A comprehensive regression analysis that explores the relationship between article features and sharing behavior using linear and regularized models to predict the exact number of shares.
 
@@ -27,9 +27,9 @@ A comprehensive regression analysis that explores the relationship between artic
 - Lasso Regression
 - Elastic Net Regression
 
-[Go to project →](./news-popularity-regression/)
+[Go to project →](./regression/)
 
-### 3. Voting Patterns Clustering Analysis
+### 3. Clustering: Voting Patterns Analysis
 
 An advanced clustering analysis that identifies patterns and similarities in republican voting behavior across different countries over time.
 
@@ -40,32 +40,35 @@ An advanced clustering analysis that identifies patterns and similarities in rep
 - Cluster Validation Methods
 - Cluster Trimmed Likelihood Curves
 
-[Go to project →](./voting-patterns-analysis/)
+[Go to project →](./clustering/)
 
 ## Repository Structure
 
 ```
 big-data-analysis/
-├── news-popularity-classification/    # Classification project directory
-│   ├── setup.R                        # Setup file for classification project
-│   ├── src/                           # Classification models source code
-│   └── README.md                      # Classification project documentation
+├── classification/                 # News popularity classification project directory
+│   ├── README.md                   # Classification project documentation
+│   ├── data_processing.R           # Data preprocessing for classification
+│   ├── knn.R                       # K-Nearest Neighbors implementation
+│   ├── logistic_regression.R       # Logistic regression variants
+│   ├── neural_networks.R           # Neural networks implementation
+│   └── random_forest.R             # Random Forest implementation
 │
-├── news-popularity-regression/        # Regression project directory
-│   ├── setup.R                        # Setup file for regression project
-│   ├── src/                           # Regression models source code
-│   └── README.md                      # Regression project documentation
+├── regression/                     # News popularity regression project directory
+│   ├── README.md                   # Regression project documentation
+│   ├── data_processing.R           # Data preprocessing for regression
+│   ├── elasic_net.R                # Elastic Net regression
+│   ├── lasso.R                     # Lasso regression
+│   ├── linear_models.R             # Linear models and stepwise selection
+│   ├── results.R                   # Results analysis
+│   └── ridge.R                     # Ridge regression
 │
-├── voting-patterns-analysis/          # Clustering project directory
-│   ├── setup.R                        # Setup file for clustering project
-│   ├── src/                           # Clustering analysis source code
-│   └── README.md                      # Clustering project documentation
+├── clustering/                     # Voting patterns clustering project directory
+│   ├── README.md                   # Clustering project documentation
+│   └── clustering.R                # Complete clustering analysis
 │
-├── data/                              # Shared data directory
-│   ├── OnlineNewsPopularity.csv       # Dataset for news projects
-│   └── votes.repub.csv                # Dataset for voting patterns project
-│
-└── README.md                          # Main repository documentation
+├── LICENSE                         # License file
+└── README.md                       # Main repository documentation
 ```
 
 ## Datasets
@@ -77,7 +80,7 @@ The projects use the following datasets:
 
 ## Prerequisites
 
-These projects require R with various packages. Each project's setup.R file handles the installation and loading of required packages.
+These projects require R with various packages. Each project's data_processing.R file handles the installation and loading of required packages.
 
 ## Running the Projects
 
@@ -85,7 +88,7 @@ Each project has its own README file with specific instructions. Generally:
 
 1. Clone this repository
 2. Navigate to the project directory of interest
-3. Run the setup.R file first to install dependencies and load data
+3. Run the data_processing.R file first to install dependencies and load data
 4. Run the individual analysis files
 
 ## Key Findings
