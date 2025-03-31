@@ -1,6 +1,6 @@
-# Big Data Analysis 
+# Big Data Analysis
 
-This repository contains multiple data analysis projects focused on applying big data techniques to economic and financial data. Each project demonstrates different methodologies and approaches for extracting insights from large datasets.
+This repository contains multiple data analysis projects focused on applying big data techniques to economic, financial, and political data. Each project demonstrates different methodologies and approaches for extracting insights from large datasets.
 
 ## Projects
 
@@ -29,6 +29,19 @@ A comprehensive regression analysis that explores the relationship between artic
 
 [Go to project →](./news-popularity-regression/)
 
+### 3. Voting Patterns Clustering Analysis
+
+An advanced clustering analysis that identifies patterns and similarities in republican voting behavior across different countries over time.
+
+**Techniques explored:**
+- Principal Component Analysis (PCA)
+- K-means Clustering
+- Trimmed K-means (Robust Clustering)
+- Cluster Validation Methods
+- Cluster Trimmed Likelihood Curves
+
+[Go to project →](./voting-patterns-analysis/)
+
 ## Repository Structure
 
 ```
@@ -36,34 +49,31 @@ big-data-analysis/
 ├── news-popularity-classification/    # Classification project directory
 │   ├── setup.R                        # Setup file for classification project
 │   ├── src/                           # Classification models source code
-│   │   ├── logistic_models.R
-│   │   ├── knn_analysis.R
-│   │   ├── random_forest.R
-│   │   └── neural_networks.R
 │   └── README.md                      # Classification project documentation
 │
 ├── news-popularity-regression/        # Regression project directory
 │   ├── setup.R                        # Setup file for regression project
 │   ├── src/                           # Regression models source code
-│   │   ├── data_processing.R
-│   │   ├── linear_models.R
-│   │   ├── ridge_model.R
-│   │   ├── lasso_model.R
-│   │   └── elastic_net.R
 │   └── README.md                      # Regression project documentation
 │
+├── voting-patterns-analysis/          # Clustering project directory
+│   ├── setup.R                        # Setup file for clustering project
+│   ├── src/                           # Clustering analysis source code
+│   └── README.md                      # Clustering project documentation
+│
 ├── data/                              # Shared data directory
-│   └── OnlineNewsPopularity.csv       # Dataset used by both projects
+│   ├── OnlineNewsPopularity.csv       # Dataset for news projects
+│   └── votes.repub.csv                # Dataset for voting patterns project
 │
 └── README.md                          # Main repository documentation
 ```
 
-## Dataset
+## Datasets
 
-Both projects use the [Online News Popularity dataset](https://archive.ics.uci.edu/ml/datasets/Online+News+Popularity) from UCI Machine Learning Repository, which contains:
-- ~40,000 articles
-- 61 features including keyword metrics, timing features, and NLP-derived attributes
-- The target variable: article shares
+The projects use the following datasets:
+
+- **News projects**: [Online News Popularity dataset](https://archive.ics.uci.edu/ml/datasets/Online+News+Popularity) from UCI Machine Learning Repository
+- **Voting patterns project**: Republican voting dataset with countries and yearly voting percentages
 
 ## Prerequisites
 
@@ -86,11 +96,15 @@ The Random Forest model demonstrated superior performance in classifying popular
 ### Regression Project
 The Lasso regression model provided the best performance in predicting the exact number of shares. Global sentiment polarity and the rate of negative words were identified as significant predictors of article popularity.
 
+### Clustering Project
+Two distinct clusters of countries emerged based on voting patterns, with PCA revealing significant temporal patterns in the data. Trimmed K-means provided more robust clustering by effectively handling outliers.
+
 ## License
 
 This repository is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgments
 
-- UCI Machine Learning Repository for providing the dataset
-- The original dataset creators: K. Fernandes, P. Vinagre and P. Cortez
+- UCI Machine Learning Repository for providing the news popularity dataset
+- The dataset providers for the republican voting data
+- The original dataset creators and R package developers
