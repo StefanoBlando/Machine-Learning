@@ -1,0 +1,38 @@
+##DATA PROCESSING
+
+library(glmnet)
+library(MASS)
+library(SIS)
+library(caret)
+library(ggplot2)
+library(car)
+library(dplyr)
+
+# Loading data
+data <- read.csv("data/OnlineNewsPopularity.csv")
+
+# data structure and cleaning
+dim(data)
+str(data)
+glimpse(data)
+
+data_clean <- data[data$shares <= 1e5, ]
+
+#setting seed to reproduce the analysis
+set.seed(123)
+
+# Random selection: 80% of the data for estimation, 20% for testing
+est_indices <- sample(1:nrow(data_clean), 0.8 * nrow(data_clean))
+train_data <- data_clean[est_indices, ]
+test_data <- data_clean[-est_indices, ]
+
+
+# Defining predictors and outcome
+predictors <- colnames(train_data[,c(3, 4, 8, 10:19, 39, 45:48)])
+outcome <- colnames(train_data[c(61)])
+
+#Defining X e Y for estimation and test sets
+X_train <- train_data[, predictors]
+y_train <- train_data[, outcome]
+X_test  <- test_data[, predictors]
+y_test  <- test_data[, outcome] 
