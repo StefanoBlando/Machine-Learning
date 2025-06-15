@@ -1,163 +1,243 @@
-# Income Census Analysis
+# 🤖 Advanced Income Classification
 
-[![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
-[![Scikit-learn](https://img.shields.io/badge/Scikit--learn-1.3.0-orange)](https://scikit-learn.org/)
-[![License](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+A comprehensive machine learning pipeline for binary income classification utilizing advanced feature engineering, hyperparameter optimization, and ensemble methods.
 
-A comprehensive machine learning project for binary classification to predict whether an individual's income exceeds $50K based on demographic and employment data from the Adult Census dataset.
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
+[![Scikit-learn](https://img.shields.io/badge/Scikit--learn-1.3+-orange.svg)](https://scikit-learn.org/)
+[![XGBoost](https://img.shields.io/badge/XGBoost-Latest-brightgreen.svg)](https://xgboost.readthedocs.io/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Code Style](https://img.shields.io/badge/Code%20Style-Black-black.svg)](https://black.readthedocs.io/)
 
 ## 🎯 Project Objective
 
-This project implements and compares four machine learning algorithms to predict income levels:
-- **Random Forest Classifier**
-- **Gradient Boosting Classifier**  
-- **Support Vector Machine (SVM)**
-- **Logistic Regression**
+Develop a robust binary classification system to predict whether an individual's income exceeds $50K, implementing state-of-the-art machine learning techniques including:
 
-The goal is to identify the best performing model through rigorous hyperparameter optimization and cross-validation.
+- **Advanced Feature Engineering** with domain expertise
+- **Multiple Class Imbalance Strategies** (SMOTE, ADASYN, SMOTEENN)
+- **Bayesian Hyperparameter Optimization** with Optuna integration
+- **Ensemble Methods** (Voting, Stacking, Weighted)
+- **Model Interpretability** using SHAP and Permutation Importance
+- **Business-Oriented Threshold Optimization** for profit maximization
 
-## 📊 Dataset Overview
+## 🏆 Key Results
 
-The Adult Census dataset contains demographic information with the following characteristics:
+| Model Configuration | F1-Score | ROC-AUC | Business Profit | Training Strategy |
+|-------------------|----------|---------|----------------|-------------------|
+| **Best Individual** | **0.xxxx** | **0.xxxx** | **$xxx,xxx** | XGBoost + SMOTE |
+| **Best Ensemble** | **0.xxxx** | **0.xxxx** | **$xxx,xxx** | Stacking Classifier |
+| Traditional Baseline | 0.xxxx | 0.xxxx | $xxx,xxx | Random Forest |
 
-- **Target Variable**: Income level (>50K, <=50K)
-- **Features**: 13 demographic and employment attributes
-- **Size**: 32,561 samples
-- **Task**: Binary classification
+*Results based on 70/30 stratified split with optimal threshold optimization*
 
-### Key Preprocessing Steps:
-- Removal of `education` and `native-country` features
-- Occupation consolidation into 5 main categories
-- Train/validation split: 70%/30% (random_state=123)
+## 🔬 Model Architecture
+
+### Traditional Models (Core Requirements)
+- **Logistic Regression** - L1/L2 regularization with balanced class weights
+- **Random Forest** - 100-500 estimators with feature importance analysis
+- **Gradient Boosting** - Sequential learning with subsample optimization
+- **Support Vector Machine** - RBF/Linear kernels with probability calibration
+
+### Advanced Models (Performance Enhancement)
+- **XGBoost** - Extreme gradient boosting with scale_pos_weight balancing
+- **LightGBM** - Microsoft's efficient gradient boosting framework
+
+### Ensemble Methods (Performance Maximization)
+- **Voting Classifier** - Soft voting across top-performing models
+- **Stacking Classifier** - Meta-learner with cross-validation
+- **Weighted Average** - Performance-weighted probability aggregation
 
 ## 🚀 Quick Start
 
-### Prerequisites
-```bash
-Python 3.8+
-pip or conda package manager
-```
-
 ### Installation
+
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/income_census_analysis.git
-cd income_census_analysis
+# Clone repository
+git clone https://github.com/yourusername/advanced-income-classification.git
+cd advanced-income-classification
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Alternative: conda environment
-conda env create -f environment.yml
-conda activate income_census
+# Install package in development mode
+pip install -e .
 ```
 
-### Usage
+### Basic Usage
+
+```python
+from src.data.loader import load_and_explore_data
+from src.data.feature_engineering import advanced_feature_engineering
+from src.preprocessing.pipeline import advanced_preprocessing_and_split
+from src.models.traditional import setup_traditional_models
+from src.optimization.hyperparameter_tuning import perform_hyperparameter_optimization
+
+# Load and engineer features
+df = load_and_explore_data('data/raw/data.csv')
+df_engineered = advanced_feature_engineering(df, target_col='target')
+
+# Preprocess and split
+preprocessing_results = advanced_preprocessing_and_split(
+    df_engineered, target_col='target', test_size=0.3, random_state=123
+)
+
+# Train models
+models_config = setup_traditional_models()
+results = perform_hyperparameter_optimization(
+    models_config, 
+    preprocessing_results['balanced_datasets'],
+    preprocessing_results['cv_strategies']
+)
+```
+
+### Command Line Interface
+
 ```bash
-# Run complete analysis pipeline
-python scripts/train_models.py
+# Train all models with default configuration
+python scripts/run_complete_pipeline.py --data-path data/raw/data.csv
 
-# Run hyperparameter tuning
-python scripts/hyperparameter_tuning.py
+# Train specific model type
+python scripts/train_traditional_models.py --data-path data/raw/data.csv --output-dir results/
 
-# Generate evaluation report
-python scripts/evaluate_models.py
+# Evaluate saved models
+python scripts/evaluate_models.py --models-dir models/saved_models/ --test-data data/raw/data.csv
 
-# View results in Jupyter notebooks
-jupyter notebook notebooks/
+# Generate model card
+python scripts/generate_model_card.py --best-model models/saved_models/best_model.pkl
 ```
 
-## 📁 Project Structure
+## 📊 Data Pipeline
+
+### Feature Engineering (20+ New Features)
+- **Occupation Categorization** - Grouped into 5 business-relevant categories
+- **Age-based Features** - Life stage groups and polynomial transformations
+- **Work Pattern Analysis** - Intensity scoring and overtime indicators
+- **Financial Behavior** - Capital gain/loss ratios and log transformations
+- **Interaction Features** - Age×Education, work efficiency metrics
+- **Target Encoding** - Group-based income rate features
+
+### Preprocessing Pipeline
+- **Missing Value Imputation** - Mode for categorical, median for numerical
+- **Feature Selection** - SelectKBest with f_classif scoring
+- **Scaling** - StandardScaler for numerical features
+- **Encoding** - OneHotEncoder for categorical features with unknown handling
+- **Class Balancing** - Multiple strategies (SMOTE, ADASYN, SMOTEENN)
+
+## 🔧 Advanced Techniques
+
+### Hyperparameter Optimization
+- **BayesSearchCV** - Efficient Bayesian optimization
+- **Optuna Framework** - TPE, CMA-ES, Random samplers with pruning
+- **Nested Cross-Validation** - Unbiased performance estimation
+- **Smart Iteration Allocation** - Model-specific optimization budgets
+
+### Model Interpretability
+- **SHAP Analysis** - TreeExplainer and KernelExplainer
+- **Permutation Importance** - Model-agnostic feature ranking
+- **Feature Importance** - Native model importance scores
+- **Stability Analysis** - Bootstrap performance validation
+
+### Business Optimization
+- **Cost-Sensitive Metrics** - Custom profit maximization
+- **Threshold Optimization** - ROC curve analysis for business impact
+- **Performance Tracking** - F1, ROC-AUC, MCC, Balanced Accuracy
+
+## 📈 Evaluation Framework
+
+### Cross-Validation Strategy
+- **Stratified K-Fold** - 5-fold with 3 repeats
+- **Train/Validation Split** - 70/30 stratified (seed=123)
+- **Bootstrap Validation** - Model stability assessment
+- **Nested CV** - Robust generalization estimation
+
+### Comprehensive Metrics
+```python
+{
+    'f1_score': 0.xxxx,           # Primary optimization metric
+    'roc_auc': 0.xxxx,            # Discrimination capability
+    'accuracy': 0.xxxx,           # Overall correctness
+    'precision': 0.xxxx,          # Positive predictive value
+    'recall': 0.xxxx,             # Sensitivity
+    'balanced_accuracy': 0.xxxx,  # Class-balanced performance
+    'matthews_corrcoef': 0.xxxx,  # Correlation coefficient
+    'business_profit': $xxx,xxx   # Economic impact
+}
+```
+
+## 📁 Repository Structure
 
 ```
-income_census_analysis/
-├── data/
-│   ├── raw/                    # Original dataset
-│   ├── processed/              # Cleaned and engineered data
-│   └── external/               # External data sources
-├── src/
-│   ├── data/                   # Data processing modules
-│   ├── models/                 # ML model implementations
-│   ├── evaluation/             # Model evaluation utilities
-│   └── utils/                  # Helper functions
-├── notebooks/                  # Jupyter notebooks for analysis
-├── config/                     # Configuration files
-├── models/                     # Trained model artifacts
-├── results/                    # Output files and reports
-├── scripts/                    # Executable scripts
-└── tests/                      # Unit tests
+advanced-income-classification/
+├── src/                          # Source code modules
+│   ├── data/                    # Data loading and feature engineering
+│   ├── models/                  # Model implementations
+│   ├── optimization/            # Hyperparameter tuning
+│   ├── evaluation/             # Metrics and interpretability
+│   └── visualization/          # Plotting and analysis
+├── notebooks/                   # Jupyter analysis notebooks
+├── scripts/                     # Command-line tools
+├── tests/                       # Unit and integration tests
+├── data/                        # Dataset storage
+├── models/                      # Saved models and artifacts
+└── results/                     # Experiment outputs
 ```
 
-## 🔧 Technical Implementation
+## 🐳 Docker Support
 
-### Data Processing Pipeline
-1. **Data Loading**: Import and initial exploration
-2. **Feature Engineering**: Create meaningful features from raw data
-3. **Data Cleaning**: Handle missing values and outliers
-4. **Feature Selection**: Remove specified features (education, native-country)
-5. **Categorical Encoding**: Transform categorical variables
-6. **Scaling**: Normalize numerical features
-7. **Train/Test Split**: 70/30 split with stratification
+```bash
+# Build image
+docker build -t income-classification .
 
-### Model Implementation
-Each model is implemented with:
-- Custom hyperparameter grids
-- Cross-validation for robust evaluation
-- Feature importance analysis
-- Performance metrics tracking
+# Run training pipeline
+docker run -v $(pwd)/data:/app/data income-classification python scripts/run_complete_pipeline.py
 
-### Evaluation Metrics
-- **Accuracy**: Overall classification accuracy
-- **Precision**: Positive predictive value
-- **Recall**: Sensitivity/True positive rate
-- **F1-Score**: Harmonic mean of precision and recall
-- **ROC-AUC**: Area under the ROC curve
-- **Confusion Matrix**: Detailed classification results
+# Run with GPU support (if available)
+docker run --gpus all -v $(pwd)/data:/app/data income-classification
+```
 
-## 📈 Results Summary
+## 🧪 Testing
 
-The best performing models will be documented in `results/reports/model_comparison.html` with:
-- Comparative performance metrics
-- Feature importance rankings
-- Hyperparameter optimization results
-- Cross-validation scores
-- Statistical significance tests
-
-## 🛠️ Development
-
-### Running Tests
 ```bash
 # Run all tests
 pytest tests/
 
-# Run specific test file
-pytest tests/test_models.py
+# Run specific test module
+pytest tests/test_feature_engineering.py -v
 
 # Run with coverage
-pytest --cov=src tests/
+pytest tests/ --cov=src --cov-report=html
 ```
 
-### Code Quality
-```bash
-# Format code
-black src/ scripts/ tests/
+## 📚 Documentation
 
-# Lint code
-flake8 src/ scripts/ tests/
+- **[Installation Guide](docs/installation.md)** - Detailed setup instructions
+- **[Methodology](docs/methodology.md)** - Technical approach and decisions
+- **[API Reference](docs/api_reference.md)** - Function and class documentation
+- **[Performance Analysis](docs/performance_analysis.md)** - Model comparison and insights
+
+## 🛠️ Development
+
+### Setting up Development Environment
+
+```bash
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Install pre-commit hooks
+pre-commit install
+
+# Run code formatting
+black src/ tests/
+flake8 src/ tests/
 
 # Type checking
 mypy src/
 ```
 
-## 📚 Documentation
-
-Detailed documentation is available in the `docs/` directory:
-- [Project Overview](docs/project_overview.md)
-- [Data Description](docs/data_description.md)
-- [Methodology](docs/methodology.md)
-- [API Reference](docs/api_reference.md)
-
-## 🤝 Contributing
+### Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -167,22 +247,15 @@ Detailed documentation is available in the `docs/` directory:
 
 ## 📄 License
 
-This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0) - see the [LICENSE](LICENSE) file for details.
-
+This project is licensed under the AGPL License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- UCI Machine Learning Repository for the Adult Census dataset
-- Scikit-learn community for excellent ML tools
-- Open source contributors who made this project possible
+- **UCI Machine Learning Repository** for the Adult Census Income dataset
+- **Scikit-learn** community for the comprehensive ML framework
+- **Optuna** team for advanced hyperparameter optimization
+- **SHAP** developers for model interpretability tools
 
-## 📞 Contact
+]
+- **Project Link**: [https://github.com/yourusername/advanced-income-classification](https://github.com/yourusername/advanced-income-classification)
 
-For questions or collaboration opportunities:
-- Email: your.email@example.com
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
-- GitHub: [@yourusername](https://github.com/yourusername)
-
----
-
-⭐ **Star this repository if you found it helpful!**
