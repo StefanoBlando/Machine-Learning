@@ -1,0 +1,50 @@
+# src/__init__.py
+"""
+Advanced Income Classification - Source Package
+"""
+__version__ = "1.0.0"
+__author__ = "Your Name"
+__email__ = "your.email@domain.com"
+
+# src/config/__init__.py
+"""
+Configuration module for the Advanced Income Classification project.
+"""
+from .settings import *
+
+# src/data/__init__.py
+"""
+Data loading and feature engineering modules.
+"""
+from .loader import load_and_explore_data, create_eda_visualizations
+from .feature_engineering import advanced_feature_engineering
+
+# src/models/__init__.py
+"""
+Machine learning models module.
+"""
+
+# src/preprocessing/__init__.py
+"""
+Data preprocessing and pipeline module.
+"""
+
+# src/optimization/__init__.py
+"""
+Hyperparameter optimization module.
+"""
+
+# src/evaluation/__init__.py
+"""
+Model evaluation and metrics module.
+"""
+
+# src/visualization/__init__.py
+"""
+Visualization and plotting module.
+"""
+
+# src/utils/__init__.py
+"""
+Utility functions module.
+"""
