@@ -1,6 +1,6 @@
 """
 Model configuration module.
-Estratto ESATTAMENTE dal MODULO 5 del notebook originale.
+
 """
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
