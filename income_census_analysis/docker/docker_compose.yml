@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  income-classification:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: income-classification-app
+    volumes:
+      - ../data:/app/data
+      - ../results:/app/results
+      - ../models:/app/models
+    environment:
+      - INCOME_CLASSIFICATION_ENV=docker
+      - PYTHONPATH=/app
+    working_dir: /app
+    command: >
+      python scripts/train_models.py 
+      --data-path data/raw/data.csv 
+      --output-dir results/experiments
+      --models traditional advanced
+    networks:
+      - ml-network
+
+  jupyter:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: income-classification-jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+      - ../data:/app/data
+      - ../results:/app/results
+      - ../models:/app/models
+      - ../notebooks:/app/notebooks
+    environment:
+      - INCOME_CLASSIFICATION_ENV=development
+      - PYTHONPATH=/app
+    working_dir: /app
+    command: >
+      jupyter notebook 
+      --ip=0.0.0.0 
+      --port=8888 
+      --no-browser 
+      --allow-root
+      --NotebookApp.token=''
+      --NotebookApp.password=''
+    networks:
+      - ml-network
+
+  model-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: income-classification-server
+    ports:
+      - "5000:5000"
+    volumes:
+      - ../models:/app/models
+      - ../data:/app/data
+    environment:
+      - INCOME_CLASSIFICATION_ENV=production
+      - PYTHONPATH=/app
+      - FLASK_ENV=production
+    working_dir: /app
+    command: >
+      python -c "
+      print('Model server would start here');
+      print('Implement Flask/FastAPI server for model serving');
+      import time; time.sleep(3600)
+      "
+    networks:
+      - ml-network
+    depends_on:
+      - income-classification
+
+networks:
+  ml-network:
+    driver: bridge
+
+volumes:
+  data-volume:
+  results-volume:
+  models-volume:
