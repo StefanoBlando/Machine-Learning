@@ -1,505 +1,435 @@
 """
-Feature engineering utilities for the Income Census Analysis project.
+Advanced feature engineering module.
+Extracted from Module 3 of the original notebook.
 """
-
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
-from typing import Tuple, Dict, Any, Optional, List
+import matplotlib.pyplot as plt
+import seaborn as sns
+from typing import Tuple, List, Optional
 import logging
+from sklearn.ensemble import IsolationForest
 
-from ..utils.config import get_config
+from ..config.settings import (
+    COLUMNS_TO_DROP, OCCUPATION_MAPPING, AGE_GROUP_BINS, AGE_GROUP_LABELS,
+    WORK_INTENSITY_BINS, WORK_INTENSITY_LABELS, EDUCATION_LEVEL_BINS, 
+    EDUCATION_LEVEL_LABELS, RANDOM_STATE, PLOT_STYLE
+)
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class FeatureEngineer:
-    """Class for advanced feature engineering and data splitting."""
-    
-    def __init__(self, config_path: Optional[str] = None):
-        """
-        Initialize FeatureEngineer.
-        
-        Args:
-            config_path: Path to configuration file
-        """
-        self.config = get_config(config_path)
-        self.data_config = self.config.data_config
-        self.features_config = self.config.features_config
-    
-    def create_age_groups(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Create age group categories for better model interpretation.
-        
-        Args:
-            df: DataFrame to process
-            
-        Returns:
-            DataFrame with age groups
-        """
-        df_processed = df.copy()
-        
-        if 'age' in df_processed.columns:
-            # Define age groups
-            age_bins = [0, 25, 35, 45, 55, 65, 100]
-            age_labels = ['18-25', '26-35', '36-45', '46-55', '56-65', '65+']
-            
-            df_processed['age_group'] = pd.cut(
-                df_processed['age'], 
-                bins=age_bins, 
-                labels=age_labels, 
-                right=False
-            )
-            
-            logger.info("Age groups created:")
-            logger.info(df_processed['age_group'].value_counts().to_dict())
-        
-        return df_processed
-    
-    def create_hours_categories(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Create working hours categories.
-        
-        Args:
-            df: DataFrame to process
-            
-        Returns:
-            DataFrame with hours categories
-        """
-        df_processed = df.copy()
-        
-        if 'hours-per-week' in df_processed.columns:
-            # Define working hours categories
-            def categorize_hours(hours):
-                if hours < 20:
-                    return 'Part-time'
-                elif hours <= 40:
-                    return 'Full-time'
-                elif hours <= 50:
-                    return 'Overtime'
-                else:
-                    return 'Excessive'
-            
-            df_processed['hours_category'] = df_processed['hours-per-week'].apply(categorize_hours)
-            
-            logger.info("Hours categories created:")
-            logger.info(df_processed['hours_category'].value_counts().to_dict())
-        
-        return df_processed
-    
-    def create_capital_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Create features from capital gain and capital loss.
-        
-        Args:
-            df: DataFrame to process
-            
-        Returns:
-            DataFrame with capital features
-        """
-        df_processed = df.copy()
-        
-        if 'capital-gain' in df_processed.columns and 'capital-loss' in df_processed.columns:
-            # Net capital (gain - loss)
-            df_processed['net_capital'] = df_processed['capital-gain'] - df_processed['capital-loss']
-            
-            # Has capital gain/loss indicators
-            df_processed['has_capital_gain'] = (df_processed['capital-gain'] > 0).astype(int)
-            df_processed['has_capital_loss'] = (df_processed['capital-loss'] > 0).astype(int)
-            df_processed['has_capital_activity'] = (
-                (df_processed['capital-gain'] > 0) | (df_processed['capital-loss'] > 0)
-            ).astype(int)
-            
-            # Capital gain/loss magnitude categories
-            def categorize_capital(amount):
-                if amount == 0:
-                    return 'None'
-                elif amount <= 1000:
-                    return 'Low'
-                elif amount <= 5000:
-                    return 'Medium'
-                else:
-                    return 'High'
-            
-            df_processed['capital_gain_category'] = df_processed['capital-gain'].apply(categorize_capital)
-            df_processed['capital_loss_category'] = df_processed['capital-loss'].apply(categorize_capital)
-            
-            logger.info("Capital features created")
-        
-        return df_processed
-    
-    def create_education_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Create education-related features (if education-num is available).
-        
-        Args:
-            df: DataFrame to process
-            
-        Returns:
-            DataFrame with education features
-        """
-        df_processed = df.copy()
-        
-        if 'education-num' in df_processed.columns:
-            # Education level categories
-            def categorize_education(edu_num):
-                if edu_num <= 8:
-                    return 'Elementary'
-                elif edu_num <= 12:
-                    return 'High School'
-                elif edu_num <= 14:
-                    return 'Some College'
-                elif edu_num <= 16:
-                    return 'Bachelor'
-                else:
-                    return 'Advanced'
-            
-            df_processed['education_level'] = df_processed['education-num'].apply(categorize_education)
-            
-            # High education indicator
-            df_processed['high_education'] = (df_processed['education-num'] >= 13).astype(int)
-            
-            logger.info("Education features created:")
-            logger.info(df_processed['education_level'].value_counts().to_dict())
-        
-        return df_processed
-    
-    def create_work_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Create work-related features.
-        
-        Args:
-            df: DataFrame to process
-            
-        Returns:
-            DataFrame with work features
-        """
-        df_processed = df.copy()
-        
-        # Government worker indicator
-        if 'workclass' in df_processed.columns:
-            government_classes = ['Federal-gov', 'Local-gov', 'State-gov']
-            df_processed['is_government_worker'] = (
-                df_processed['workclass'].isin(government_classes)
-            ).astype(int)
-            
-            # Self-employed indicator
-            self_employed_classes = ['Self-emp-not-inc', 'Self-emp-inc']
-            df_processed['is_self_employed'] = (
-                df_processed['workclass'].isin(self_employed_classes)
-            ).astype(int)
-        
-        # Professional occupation indicator
-        if 'occupation' in df_processed.columns:
-            professional_occupations = ['Professional', 'Exec-managerial']
-            df_processed['is_professional'] = (
-                df_processed['occupation'].isin(professional_occupations)
-            ).astype(int)
-        
-        logger.info("Work features created")
-        return df_processed
-    
-    def create_family_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Create family and relationship features.
-        
-        Args:
-            df: DataFrame to process
-            
-        Returns:
-            DataFrame with family features
-        """
-        df_processed = df.copy()
-        
-        # Married indicator
-        if 'marital-status' in df_processed.columns:
-            married_statuses = ['Married-civ-spouse', 'Married-spouse-absent', 'Married-AF-spouse']
-            df_processed['is_married'] = (
-                df_processed['marital-status'].isin(married_statuses)
-            ).astype(int)
-        
-        # Head of household indicator
-        if 'relationship' in df_processed.columns:
-            head_relationships = ['Husband', 'Wife']
-            df_processed['is_head_of_household'] = (
-                df_processed['relationship'].isin(head_relationships)
-            ).astype(int)
-        
-        logger.info("Family features created")
-        return df_processed
-    
-    def create_interaction_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Create interaction features between important variables.
-        
-        Args:
-            df: DataFrame to process
-            
-        Returns:
-            DataFrame with interaction features
-        """
-        df_processed = df.copy()
-        
-        # Age and education interaction
-        if 'age' in df_processed.columns and 'education-num' in df_processed.columns:
-            df_processed['age_education_interaction'] = (
-                df_processed['age'] * df_processed['education-num']
-            )
-        
-        # Hours and age interaction
-        if 'hours-per-week' in df_processed.columns and 'age' in df_processed.columns:
-            df_processed['hours_age_interaction'] = (
-                df_processed['hours-per-week'] * df_processed['age']
-            )
-        
-        # Education and capital gain interaction
-        if 'education-num' in df_processed.columns and 'capital-gain' in df_processed.columns:
-            df_processed['education_capital_interaction'] = (
-                df_processed['education-num'] * np.log1p(df_processed['capital-gain'])
-            )
-        
-        logger.info("Interaction features created")
-        return df_processed
-    
-    def apply_all_feature_engineering(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Apply all feature engineering steps.
-        
-        Args:
-            df: DataFrame to process
-            
-        Returns:
-            DataFrame with all engineered features
-        """
-        logger.info("Starting comprehensive feature engineering...")
-        
-        df_processed = df.copy()
-        
-        # Apply all feature engineering steps
-        df_processed = self.create_age_groups(df_processed)
-        df_processed = self.create_hours_categories(df_processed)
-        df_processed = self.create_capital_features(df_processed)
-        df_processed = self.create_education_features(df_processed)
-        df_processed = self.create_work_features(df_processed)
-        df_processed = self.create_family_features(df_processed)
-        df_processed = self.create_interaction_features(df_processed)
-        
-        logger.info(f"Feature engineering completed. New shape: {df_processed.shape}")
-        return df_processed
-    
-    def split_data(self, X: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        """
-        Split data into training and validation sets.
-        
-        Args:
-            X: Feature matrix
-            y: Target vector
-            
-        Returns:
-            Tuple of (X_train, X_val, y_train, y_val)
-        """
-        train_size = self.data_config.get('train_size', 0.7)
-        random_state = self.data_config.get('random_state', 123)
-        stratify = self.data_config.get('stratify', True)
-        
-        stratify_param = y if stratify else None
-        
-        X_train, X_val, y_train, y_val = train_test_split(
-            X, y,
-            train_size=train_size,
-            random_state=random_state,
-            stratify=stratify_param
-        )
-        
-        logger.info(f"Data split completed:")
-        logger.info(f"Training set: {X_train.shape[0]} samples")
-        logger.info(f"Validation set: {X_val.shape[0]} samples")
-        logger.info(f"Training target distribution: {np.bincount(y_train)}")
-        logger.info(f"Validation target distribution: {np.bincount(y_val)}")
-        
-        return X_train, X_val, y_train, y_val
-    
-    def get_feature_importance_data(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """
-        Prepare data for feature importance analysis.
-        
-        Args:
-            df: DataFrame with engineered features
-            
-        Returns:
-            Dictionary with feature information
-        """
-        feature_info = {
-            'original_features': [],
-            'engineered_features': [],
-            'feature_types': {},
-            'feature_descriptions': {}
-        }
-        
-        # Original features (from dataset)
-        original_cols = [
-            'age', 'workclass', 'fnlwgt', 'education-num', 'marital-status',
-            'occupation', 'relationship', 'race', 'sex', 'capital-gain',
-            'capital-loss', 'hours-per-week'
-        ]
-        
-        feature_info['original_features'] = [col for col in original_cols if col in df.columns]
-        
-        # Engineered features
-        engineered_cols = [
-            'age_group', 'hours_category', 'net_capital', 'has_capital_gain',
-            'has_capital_loss', 'has_capital_activity', 'capital_gain_category',
-            'capital_loss_category', 'education_level', 'high_education',
-            'is_government_worker', 'is_self_employed', 'is_professional',
-            'is_married', 'is_head_of_household', 'age_education_interaction',
-            'hours_age_interaction', 'education_capital_interaction'
-        ]
-        
-        feature_info['engineered_features'] = [col for col in engineered_cols if col in df.columns]
-        
-        # Feature types
-        for col in df.columns:
-            if col in ['target']:
-                continue
-            elif df[col].dtype == 'object' or col.endswith('_category') or col.endswith('_group'):
-                feature_info['feature_types'][col] = 'categorical'
-            elif col.startswith('is_') or col.startswith('has_'):
-                feature_info['feature_types'][col] = 'binary'
-            else:
-                feature_info['feature_types'][col] = 'numerical'
-        
-        # Feature descriptions
-        feature_info['feature_descriptions'] = {
-            'age': 'Age of the individual',
-            'workclass': 'Type of employment',
-            'fnlwgt': 'Final weight (census sampling weight)',
-            'education-num': 'Years of education',
-            'marital-status': 'Marital status',
-            'occupation': 'Occupation category (combined into 5 groups)',
-            'relationship': 'Relationship status in family',
-            'race': 'Race/ethnicity',
-            'sex': 'Gender',
-            'capital-gain': 'Capital gains income',
-            'capital-loss': 'Capital losses',
-            'hours-per-week': 'Hours worked per week',
-            'age_group': 'Age categorized into groups',
-            'hours_category': 'Working hours categorized',
-            'net_capital': 'Net capital (gains - losses)',
-            'has_capital_gain': 'Indicator for any capital gains',
-            'has_capital_loss': 'Indicator for any capital losses',
-            'has_capital_activity': 'Indicator for any capital activity',
-            'capital_gain_category': 'Capital gains amount category',
-            'capital_loss_category': 'Capital losses amount category',
-            'education_level': 'Education level category',
-            'high_education': 'Indicator for higher education (≥13 years)',
-            'is_government_worker': 'Indicator for government employment',
-            'is_self_employed': 'Indicator for self-employment',
-            'is_professional': 'Indicator for professional occupation',
-            'is_married': 'Indicator for married status',
-            'is_head_of_household': 'Indicator for head of household',
-            'age_education_interaction': 'Interaction between age and education',
-            'hours_age_interaction': 'Interaction between hours worked and age',
-            'education_capital_interaction': 'Interaction between education and capital gains'
-        }
-        
-        return feature_info
-
-
-def engineer_and_split_data(
-    df: pd.DataFrame, 
-    config_path: Optional[str] = None
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, FeatureEngineer]:
+def advanced_feature_engineering(df: pd.DataFrame, target_col: str) -> Tuple[pd.DataFrame, List[str], List[str], List[str]]:
     """
-    Convenience function to engineer features and split data.
+    Advanced feature engineering with domain knowledge and intelligent feature creation.
     
     Args:
-        df: Preprocessed DataFrame
-        config_path: Path to configuration file
+        df (pd.DataFrame): Input dataframe
+        target_col (str): Name of the target column
         
     Returns:
-        Tuple of (X_train, X_val, y_train, y_val, feature_engineer)
+        Tuple containing:
+        - Processed dataframe
+        - Updated numeric columns list
+        - Updated categorical columns list  
+        - List of newly created feature names
     """
-    engineer = FeatureEngineer(config_path)
+    logger.info("🚀 Starting Advanced Feature Engineering")
+    logger.info("-" * 50)
     
-    # Apply feature engineering
-    df_engineered = engineer.apply_all_feature_engineering(df)
+    df_processed = df.copy()
+    new_features_created = []
     
-    # Prepare features and target
-    target_col = engineer.features_config.get('target_column', 'target')
-    X = df_engineered.drop(columns=[target_col]).values
-    y = df_engineered[target_col].values
+    # 1. COLUMN REMOVAL AS PER REQUIREMENTS
+    logger.info("🗑️ Removing specified columns...")
+    existing_drops = [col for col in COLUMNS_TO_DROP if col in df_processed.columns]
     
-    # Split data
-    X_train, X_val, y_train, y_val = engineer.split_data(X, y)
+    if existing_drops:
+        df_processed = df_processed.drop(existing_drops, axis=1)
+        logger.info(f"   ✅ Removed: {existing_drops}")
+    else:
+        logger.info(f"   ⚠️ Columns {COLUMNS_TO_DROP} not found in dataset, skipping removal.")
     
-    return X_train, X_val, y_train, y_val, engineer
+    # Re-identify feature types after dropping columns
+    numeric_features = df_processed.select_dtypes(include=[np.number]).columns.tolist()
+    categorical_features = df_processed.select_dtypes(include=['object']).columns.tolist()
+    
+    # Ensure target is not treated as a feature
+    if target_col in numeric_features:
+        numeric_features.remove(target_col)
+    if target_col in categorical_features:
+        categorical_features.remove(target_col)
+    
+    # 2. INTELLIGENT MISSING VALUE IMPUTATION
+    logger.info("🔧 Handling missing values...")
+    missing_cols = df_processed.isnull().sum()
+    for col in missing_cols[missing_cols > 0].index:
+        if df_processed[col].dtype == 'object':
+            mode_val = df_processed[col].mode().iloc[0] if len(df_processed[col].mode()) > 0 else 'Unknown'
+            df_processed[col] = df_processed[col].fillna(mode_val)
+            logger.info(f"   {col}: filled missing values with '{mode_val}'")
+        else:
+            median_val = df_processed[col].median()
+            df_processed[col] = df_processed[col].fillna(median_val)
+            logger.info(f"   {col}: filled missing values with median {median_val}")
+    
+    # 3. SMART OCCUPATION MAPPING (to 5 categories)
+    if 'occupation' in df_processed.columns:
+        logger.info("👷 Smart Occupation Mapping (to 5 categories)...")
+        
+        # Calculate income rate for each original occupation to guide mapping
+        occupation_income_rate = df_processed.groupby('occupation')[target_col].mean().sort_values(ascending=False)
+        
+        logger.info("   Original occupation income rates:")
+        for occ, rate in occupation_income_rate.head(10).items():
+            count = (df_processed['occupation'] == occ).sum()
+            logger.info(f"      {occ:<20} {rate:.3f} ({count:,} samples)")
+        
+        # Apply mapping and handle unmapped values
+        df_processed['occupation'] = df_processed['occupation'].map(OCCUPATION_MAPPING).fillna('Unknown_Occupation')
+        
+        logger.info("   ✅ Mapped to 5 categories:")
+        new_dist = df_processed['occupation'].value_counts()
+        for occ, count in new_dist.items():
+            rate = df_processed[df_processed['occupation'] == occ][target_col].mean()
+            logger.info(f"      {occ:<25} {count:,} ({count/len(df_processed)*100:.1f}%) - Income rate: {rate:.3f}")
+        
+        # Ensure 'occupation' is correctly recognized as categorical
+        if 'occupation' in numeric_features:
+            numeric_features.remove('occupation')
+        if 'occupation' not in categorical_features:
+            categorical_features.append('occupation')
+    
+    # 4. ADVANCED FEATURE CREATION
+    logger.info("🚀 Creating advanced features...")
+    
+    # Age-based features
+    if 'age' in df_processed.columns:
+        # Age groups using domain knowledge
+        df_processed['age_group'] = pd.cut(df_processed['age'], bins=AGE_GROUP_BINS, 
+                                         labels=AGE_GROUP_LABELS, include_lowest=True)
+        # Age squared to capture non-linear relationships
+        df_processed['age_squared'] = df_processed['age'] ** 2
+        new_features_created.extend(['age_group', 'age_squared'])
+        logger.info("   ✅ Created age-based features")
+    
+    # Work intensity and patterns
+    if 'hours-per-week' in df_processed.columns:
+        # Categorize hours per week
+        df_processed['work_intensity'] = pd.cut(df_processed['hours-per-week'], bins=WORK_INTENSITY_BINS, 
+                                              labels=WORK_INTENSITY_LABELS, include_lowest=True)
+        # Indicator for working overtime
+        df_processed['is_overtime'] = (df_processed['hours-per-week'] > 40).astype(int)
+        # Work intensity score with diminishing returns
+        df_processed['work_intensity_score'] = np.where(df_processed['hours-per-week'] <= 40, 
+                                                      df_processed['hours-per-week'] / 40,  
+                                                      1 + (df_processed['hours-per-week'] - 40) / 60)
+        new_features_created.extend(['work_intensity', 'is_overtime', 'work_intensity_score'])
+        logger.info("   ✅ Created work pattern features")
+    
+    # Capital and financial features
+    if 'capital-gain' in df_processed.columns and 'capital-loss' in df_processed.columns:
+        # Net capital gain/loss
+        df_processed['capital_net'] = df_processed['capital-gain'] - df_processed['capital-loss']
+        # Indicators for any capital activity
+        df_processed['has_capital_gain'] = (df_processed['capital-gain'] > 0).astype(int)
+        df_processed['has_capital_loss'] = (df_processed['capital-loss'] > 0).astype(int)
+        df_processed['has_any_capital_activity'] = ((df_processed['capital-gain'] > 0) | 
+                                                  (df_processed['capital-loss'] > 0)).astype(int)
+        # Ratio (avoid division by zero)
+        df_processed['capital_gain_to_loss_ratio'] = df_processed['capital-gain'] / (df_processed['capital-loss'] + 1e-6)
+        # Log transformations for highly skewed features
+        df_processed['capital_gain_log'] = np.log1p(df_processed['capital-gain'])
+        df_processed['capital_loss_log'] = np.log1p(df_processed['capital-loss'])
+        new_features_created.extend(['capital_net', 'has_capital_gain', 'has_capital_loss', 
+                                   'has_any_capital_activity', 'capital_gain_to_loss_ratio',
+                                   'capital_gain_log', 'capital_loss_log'])
+        logger.info("   ✅ Created capital/financial features")
+    
+    # Marital status simplification
+    if 'marital-status' in df_processed.columns:
+        # Simplify marital status into broader categories
+        married_mapping = {
+            'Married-civ-spouse': 'Married', 'Married-spouse-absent': 'Married', 'Married-AF-spouse': 'Married',
+            'Divorced': 'Previously_Married', 'Separated': 'Previously_Married', 'Widowed': 'Previously_Married',
+            'Never-married': 'Never_Married'
+        }
+        df_processed['marital_simple'] = df_processed['marital-status'].map(married_mapping).fillna('Unknown_Marital')
+        # Indicator for stable civil marriage
+        df_processed['is_stable_marriage'] = (df_processed['marital-status'] == 'Married-civ-spouse').astype(int)
+        new_features_created.extend(['marital_simple', 'is_stable_marriage'])
+        logger.info("   ✅ Created marital status features")
+    
+    # Education features (using education-num)
+    if 'education-num' in df_processed.columns:
+        # Group numerical education levels
+        df_processed['education_level'] = pd.cut(df_processed['education-num'], bins=EDUCATION_LEVEL_BINS, 
+                                               labels=EDUCATION_LEVEL_LABELS, include_lowest=True)
+        # Squared term for non-linear effects
+        df_processed['education_num_squared'] = df_processed['education-num'] ** 2
+        new_features_created.extend(['education_level', 'education_num_squared'])
+        logger.info("   ✅ Created education features")
+    
+    # 5. INTERACTION FEATURES
+    logger.info("🔗 Creating interaction features...")
+    interaction_features_count = 0
+    
+    if 'age' in df_processed.columns and 'education-num' in df_processed.columns:
+        df_processed['age_education_interaction'] = df_processed['age'] * df_processed['education-num']
+        new_features_created.append('age_education_interaction')
+        interaction_features_count += 1
+    
+    if 'hours-per-week' in df_processed.columns and 'age' in df_processed.columns:
+        # Work efficiency proxy
+        df_processed['work_efficiency'] = df_processed['hours-per-week'] / (df_processed['age'] + 1)
+        new_features_created.append('work_efficiency')
+        interaction_features_count += 1
+    
+    if 'age' in df_processed.columns and 'education-num' in df_processed.columns:
+        # Experience proxy
+        df_processed['experience_proxy'] = np.maximum(df_processed['age'] - df_processed['education-num'] - 5, 0)
+        new_features_created.append('experience_proxy')
+        interaction_features_count += 1
+    
+    logger.info(f"   ✅ Created {interaction_features_count} interaction features")
+    
+    # 6. OUTLIER DETECTION
+    current_numeric_features = df_processed.select_dtypes(include=[np.number]).columns.tolist()
+    if target_col in current_numeric_features:
+        current_numeric_features.remove(target_col)
+    
+    if len(current_numeric_features) > 3:
+        logger.info("🚨 Outlier detection (IsolationForest)...")
+        try:
+            iso_forest = IsolationForest(contamination=0.05, random_state=RANDOM_STATE, n_jobs=-1)
+            outlier_predictions = iso_forest.fit_predict(df_processed[current_numeric_features])
+            df_processed['is_outlier'] = (outlier_predictions == -1).astype(int)
+            df_processed['outlier_score'] = iso_forest.decision_function(df_processed[current_numeric_features])
+            
+            outlier_count = df_processed['is_outlier'].sum()
+            logger.info(f"   ✅ Detected {outlier_count} outliers ({outlier_count/len(df_processed)*100:.1f}%)")
+            new_features_created.extend(['is_outlier', 'outlier_score'])
+        except Exception as e:
+            logger.error(f"   ❌ Outlier detection failed: {str(e)}. Skipping outlier features.")
+    
+    # 7. TARGET ENCODING FEATURES
+    logger.info("📊 Creating group-based features (Target Encoding-like)...")
+    
+    # Re-identify categorical features including newly created ones
+    current_categorical_features = df_processed.select_dtypes(include=['object', 'category']).columns.tolist()
+    if target_col in current_categorical_features:
+        current_categorical_features.remove(target_col)
+    
+    # Select specific categorical features for target encoding
+    selected_target_encode_cols = []
+    for col in ['workclass', 'marital_simple', 'occupation']:
+        if col in df_processed.columns:
+            selected_target_encode_cols.append(col)
+    
+    for cat_col in selected_target_encode_cols:
+        income_rate_col = f'{cat_col}_income_rate'
+        df_processed[income_rate_col] = df_processed.groupby(cat_col)[target_col].transform('mean')
+        new_features_created.append(income_rate_col)
+        logger.info(f"   ✅ Created {income_rate_col}")
+    
+    # Update feature lists
+    updated_numeric_cols = df_processed.select_dtypes(include=[np.number]).columns.tolist()
+    updated_categorical_cols = df_processed.select_dtypes(include=['object', 'category']).columns.tolist()
+    
+    if target_col in updated_numeric_cols:
+        updated_numeric_cols.remove(target_col)
+    if target_col in updated_categorical_cols:
+        updated_categorical_cols.remove(target_col)
+    
+    # Summary
+    logger.info("📈 Feature Engineering Summary:")
+    logger.info(f"   Original features: {df.shape[1]} (excluding target)")
+    logger.info(f"   Features removed: {len(COLUMNS_TO_DROP)}")
+    logger.info(f"   New features created: {len(new_features_created)}")
+    logger.info(f"   Final feature count: {len(updated_numeric_cols)} numeric + {len(updated_categorical_cols)} categorical")
+    logger.info(f"   Total features: {len(updated_numeric_cols) + len(updated_categorical_cols)}")
+    
+    logger.info("📋 List of New Features Created:")
+    for i, feature in enumerate(new_features_created, 1):
+        logger.info(f"   {i:2d}. {feature}")
+    
+    logger.info(f"🎯 Dataset ready for preprocessing: {df_processed.shape[0]:,} rows × {df_processed.shape[1]} columns")
+    logger.info("✅ Advanced feature engineering completed!")
+    
+    return df_processed, updated_numeric_cols, updated_categorical_cols, new_features_created
 
 
-def save_engineered_data(
-    X_train: np.ndarray, 
-    X_val: np.ndarray, 
-    y_train: np.ndarray, 
-    y_val: np.ndarray,
-    feature_names: List[str],
-    config_path: Optional[str] = None
-):
+def create_feature_engineering_visualizations(df_original: pd.DataFrame, df_engineered: pd.DataFrame, 
+                                             target_col: str, save_path: Optional[str] = None) -> None:
     """
-    Save engineered and split data to files.
+    Create visualizations to show the impact of feature engineering.
     
     Args:
-        X_train: Training features
-        X_val: Validation features
-        y_train: Training targets
-        y_val: Validation targets
-        feature_names: List of feature names
-        config_path: Path to configuration file
+        df_original (pd.DataFrame): Original dataframe before feature engineering
+        df_engineered (pd.DataFrame): Dataframe after feature engineering
+        target_col (str): Name of the target column
+        save_path (Optional[str]): Path to save the visualization
     """
-    config = get_config(config_path)
-    processed_path = config.get('data.processed_path', 'data/processed/')
+    logger.info("📊 Generating Feature Engineering Visualizations...")
     
-    # Create DataFrames
-    train_df = pd.DataFrame(X_train, columns=feature_names)
-    train_df['target'] = y_train
+    # Set plot style
+    try:
+        plt.style.use(PLOT_STYLE)
+    except:
+        plt.style.use('seaborn')
     
-    val_df = pd.DataFrame(X_val, columns=feature_names)
-    val_df['target'] = y_val
+    plt.figure(figsize=(18, 15))
     
-    # Save to CSV
-    train_path = Path(processed_path) / 'train_data.csv'
-    val_path = Path(processed_path) / 'validation_data.csv'
+    # 1. New Occupation vs Income
+    if 'occupation' in df_engineered.columns:
+        plt.subplot(3, 3, 1)
+        occupation_income = df_engineered.groupby('occupation')[target_col].mean().sort_values(ascending=False)
+        occupation_income.plot(kind='bar', color='coolwarm')
+        plt.title('Income Rate by New Occupation Category')
+        plt.xlabel('Occupation Category')
+        plt.ylabel('Income Rate (>50K)')
+        plt.xticks(rotation=45, ha='right')
     
-    train_df.to_csv(train_path, index=False)
-    val_df.to_csv(val_path, index=False)
+    # 2. Age Group vs Income
+    if 'age_group' in df_engineered.columns:
+        plt.subplot(3, 3, 2)
+        age_group_income = df_engineered.groupby('age_group')[target_col].mean()
+        age_group_income.plot(kind='bar', color='mako')
+        plt.title('Income Rate by Age Group')
+        plt.xlabel('Age Group')
+        plt.ylabel('Income Rate (>50K)')
+        plt.xticks(rotation=45, ha='right')
     
-    logger.info(f"Training data saved to {train_path}")
-    logger.info(f"Validation data saved to {val_path}")
+    # 3. Work Intensity vs Income
+    if 'work_intensity' in df_engineered.columns:
+        plt.subplot(3, 3, 3)
+        work_intensity_income = df_engineered.groupby('work_intensity')[target_col].mean()
+        work_intensity_income.plot(kind='bar', color='rocket')
+        plt.title('Income Rate by Work Intensity')
+        plt.xlabel('Work Intensity')
+        plt.ylabel('Income Rate (>50K)')
+        plt.xticks(rotation=45, ha='right')
     
-    # Save feature names
-    feature_names_path = Path(processed_path) / 'feature_names.txt'
-    with open(feature_names_path, 'w') as f:
-        for name in feature_names:
-            f.write(f"{name}\n")
+    # 4. Distribution of Capital Net
+    if 'capital_net' in df_engineered.columns:
+        plt.subplot(3, 3, 4)
+        plt.hist(df_engineered['capital_net'], bins=50, alpha=0.7, color='purple')
+        plt.title('Distribution of Capital Net')
+        plt.xlabel('Capital Net')
+        plt.ylabel('Count')
+        plt.yscale('log')  # Log scale due to skewness
     
-    logger.info(f"Feature names saved to {feature_names_path}")
+    # 5. Distribution of Outlier Score
+    if 'outlier_score' in df_engineered.columns:
+        plt.subplot(3, 3, 5)
+        plt.hist(df_engineered['outlier_score'], bins=50, alpha=0.7, color='darkgreen')
+        plt.title('Distribution of Outlier Score')
+        plt.xlabel('Outlier Score')
+        plt.ylabel('Count')
+    
+    # 6. Correlation Heatmap with Key New Features
+    key_new_features = ['age_squared', 'capital_net', 'work_intensity_score']
+    target_encoded_features = [col for col in df_engineered.columns if '_income_rate' in col]
+    
+    # Include existing important features
+    existing_features = ['hours-per-week', 'education-num']
+    plot_features = []
+    
+    for feat_list in [key_new_features, target_encoded_features[:3], existing_features]:
+        for feat in feat_list:
+            if feat in df_engineered.columns:
+                plot_features.append(feat)
+    
+    if target_col in df_engineered.columns and pd.api.types.is_numeric_dtype(df_engineered[target_col]):
+        plot_features.append(target_col)
+    
+    if len(plot_features) > 1:
+        plt.subplot(3, 3, 6)
+        corr_matrix = df_engineered[plot_features].corr()
+        sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f", 
+                   linewidths=.5, annot_kws={"size": 8})
+        plt.title('Correlation Matrix with Key New Features')
+        plt.xticks(rotation=45, ha='right', fontsize=8)
+        plt.yticks(rotation=0, fontsize=8)
+    
+    # 7. Feature Count Comparison
+    plt.subplot(3, 3, 7)
+    original_features = len([col for col in df_original.columns if col != target_col])
+    engineered_features = len([col for col in df_engineered.columns if col != target_col])
+    
+    plt.bar(['Original', 'After Engineering'], [original_features, engineered_features], 
+           color=['lightblue', 'darkblue'])
+    plt.title('Feature Count Comparison')
+    plt.ylabel('Number of Features')
+    for i, v in enumerate([original_features, engineered_features]):
+        plt.text(i, v + 0.5, str(v), ha='center', va='bottom', fontweight='bold')
+    
+    # 8. Target Encoding Example
+    if target_encoded_features:
+        plt.subplot(3, 3, 8)
+        example_feature = target_encoded_features[0]
+        base_feature = example_feature.replace('_income_rate', '')
+        
+        if base_feature in df_engineered.columns:
+            target_rates = df_engineered.groupby(base_feature)[target_col].mean().sort_values(ascending=False)
+            target_rates.plot(kind='bar', color='orange')
+            plt.title(f'Target Encoding: {base_feature}')
+            plt.xlabel(base_feature.replace('_', ' ').title())
+            plt.ylabel('Income Rate')
+            plt.xticks(rotation=45, ha='right')
+    
+    # 9. Interaction Feature Example
+    if 'age_education_interaction' in df_engineered.columns:
+        plt.subplot(3, 3, 9)
+        plt.scatter(df_engineered['age_education_interaction'], df_engineered[target_col], 
+                   alpha=0.5, color='red', s=1)
+        plt.title('Age × Education Interaction Feature')
+        plt.xlabel('Age × Education Interaction')
+        plt.ylabel('Income (0/1)')
+    
+    plt.tight_layout()
+    
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        logger.info(f"📁 Feature engineering visualizations saved to {save_path}")
+    
+    plt.show()
+    logger.info("✅ Feature Engineering Visualizations generated successfully!")
 
 
-if __name__ == "__main__":
-    # Test feature engineering
-    from .load_data import load_and_validate_data
-    from .preprocess import preprocess_data
+def get_feature_engineering_summary(new_features_created: List[str], df_original: pd.DataFrame, 
+                                   df_engineered: pd.DataFrame) -> dict:
+    """
+    Get a summary of the feature engineering process.
     
-    # Load and preprocess data
-    df = load_and_validate_data()
-    X, y, preprocessor = preprocess_data(df)
+    Args:
+        new_features_created (List[str]): List of newly created feature names
+        df_original (pd.DataFrame): Original dataframe
+        df_engineered (pd.DataFrame): Engineered dataframe
+        
+    Returns:
+        dict: Feature engineering summary
+    """
+    summary = {
+        'original_feature_count': df_original.shape[1] - 1,  # Exclude target
+        'engineered_feature_count': df_engineered.shape[1] - 1,  # Exclude target
+        'new_features_count': len(new_features_created),
+        'new_features_list': new_features_created,
+        'features_removed': len(COLUMNS_TO_DROP),
+        'removed_features': COLUMNS_TO_DROP,
+        'occupation_categories': len(OCCUPATION_MAPPING.values()),
+        'feature_types': {
+            'age_based': len([f for f in new_features_created if 'age' in f.lower()]),
+            'work_based': len([f for f in new_features_created if 'work' in f.lower() or 'hour' in f.lower()]),
+            'capital_based': len([f for f in new_features_created if 'capital' in f.lower()]),
+            'marital_based': len([f for f in new_features_created if 'marital' in f.lower()]),
+            'education_based': len([f for f in new_features_created if 'education' in f.lower()]),
+            'interaction_based': len([f for f in new_features_created if 'interaction' in f.lower() or 'efficiency' in f.lower() or 'experience' in f.lower()]),
+            'outlier_based': len([f for f in new_features_created if 'outlier' in f.lower()]),
+            'target_encoded': len([f for f in new_features_created if 'income_rate' in f.lower()])
+        }
+    }
     
-    # Create DataFrame for feature engineering
-    feature_names = preprocessor.get_feature_names()
-    df_processed = pd.DataFrame(X, columns=feature_names)
-    df_processed['target'] = y
-    
-    # Apply feature engineering and split
-    X_train, X_val, y_train, y_val, engineer = engineer_and_split_data(df_processed)
-    
-    print(f"Training set shape: {X_train.shape}")
-    print(f"Validation set shape: {X_val.shape}")
-    print(f"Feature engineering completed successfully!")
+    return summary
