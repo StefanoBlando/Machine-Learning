@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+"""
+Script che usa ESATTAMENTE il codice estratto dal notebook originale.
+Questo script dimostra come i moduli del notebook vengono riorganizzati nella repository.
+
+Usage:
+    python scripts/extract_notebook_pipeline.py --data-path data/raw/data.csv
+"""
+import argparse
+import sys
+from pathlib import Path
+
+# Add src to path
+sys.path.append(str(Path(__file__).parent.parent))
+
+# Import dei moduli esattamente come nel notebook
+from src.config.settings import *  # MODULO 1
+from src.data.loader import load_and_explore_data  # MODULO 2
+from src.data.feature_engineering import advanced_feature_engineering  # MODULO 3
+from src.preprocessing.pipeline import advanced_preprocessing_and_split  # MODULO 4
+from src.models.base import setup_advanced_models, create_custom_scorer  # MODULO 5
+
+
+def main():
+    """Esegue la pipeline esattamente come nel notebook originale."""
+    parser = argparse.ArgumentParser(description='Advanced Income Classification - Notebook Pipeline')
+    parser.add_argument('--data-path', type=str, required=True,
+                       help='Path to the CSV data file')
+    
+    args = parser.parse_args()
+    
+    print("🚀 ADVANCED INCOME CLASSIFICATION - ESTRATTO DAL NOTEBOOK")
+    print("=" * 80)
+    print(f"📄 Usando il codice ESATTO dal notebook originale")
+    print(f"📊 Data Path: {args.data_path}")
+    
+    try:
+        # =========================================================================
+        # MODULO 1: Setup già importato dalle settings
+        # =========================================================================
+        print(f"\n✅ MODULO 1: Setup completato (importato da settings)")
+        
+        # =========================================================================
+        # MODULO 2: DATA LOADING E EDA AVANZATA
+        # =========================================================================
+        df, numeric_cols, categorical_cols = load_and_explore_data(args.data_path)
+        
+        if df is None:
+            raise SystemExit("Data loading failed. Exiting analysis.")
+        
+        # Ensure 'target' column is set and numeric (0/1) for consistency
+        if 'target' not in df.columns or not pd.api.types.is_numeric_dtype(df['target']):
+            print("Error: 'target' column not correctly identified or converted to numeric 0/1. Please check your data.")
+            raise SystemExit("Target column issue. Exiting analysis.")
+        
+        # =========================================================================
+        # MODULO 3: FEATURE ENGINEERING AVANZATO
+        # =========================================================================
+        df_engineered, numeric_cols_updated, categorical_cols_updated, created_features = \
+            advanced_feature_engineering(df, target_feature_name)
+        
+        # =========================================================================
+        # MODULO 4: PREPROCESSING E DATA SPLITTING AVANZATO
+        # =========================================================================
+        preprocessing_results = advanced_preprocessing_and_split(
+            df_engineered, target_feature_name, TEST_SIZE, RANDOM_STATE
+        )
+        
+        # Extract key variables for easy access
+        X_train_raw = preprocessing_results['X_train_raw']
+        X_val_raw = preprocessing_results['X_val_raw']
+        y_train = preprocessing_results['y_train']
+        y_val = preprocessing_results['y_val']
+        X_val_preprocessed = preprocessing_results['X_val_preprocessed']
+        preprocessor = preprocessing_results['preprocessor']
+        balanced_datasets = preprocessing_results['balanced_datasets']
+        cv_strategies = preprocessing_results['cv_strategies']
+        class_weight_dict = preprocessing_results['class_weight_dict']
+        feature_names_after_preprocessing = preprocessing_results['feature_names_after_preprocessing']
+        
+        # =========================================================================
+        # MODULO 5: CONFIGURAZIONE MODELLI AVANZATI
+        # =========================================================================
+        models_config = setup_advanced_models(class_weight_dict, y_train)
+        custom_scorer = create_custom_scorer()
+        
+        print(f"\n🎯 Configurazione completata!")
+        print(f"📊 Dataset shape: {df_engineered.shape}")
+        print(f"🔧 Features create: {len(created_features)}")
+        print(f"⚖️ Balanced datasets: {list(balanced_datasets.keys())}")
+        print(f"🤖 Modelli configurati: {list(models_config.keys())}")
+        print(f"📈 Features dopo preprocessing: {len(feature_names_after_preprocessing)}")
+        
+        print(f"\n✅ Pipeline estratta dal notebook completata con successo!")
+        print(f"🚀 I moduli 6-10 (training, ensemble, visualizzazioni) possono essere aggiunti seguendo la stessa logica")
+        
+        return 0
+        
+    except Exception as e:
+        print(f"❌ Errore nella pipeline: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return 1
+
+
+if __name__ == "__main__":
+    exit_code = main()
+    sys.exit(exit_code)
