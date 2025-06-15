@@ -1,6 +1,6 @@
 """
 Advanced preprocessing and data splitting module.
-Estratto ESATTAMENTE dal MODULO 4 del notebook originale.
+
 """
 import pandas as pd
 import numpy as np
