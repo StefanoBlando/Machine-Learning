@@ -1,6 +1,6 @@
 """
 Data loading and exploratory data analysis module.
-Estratto ESATTAMENTE dal MODULO 2 del notebook originale.
+
 """
 import pandas as pd
 import numpy as np
