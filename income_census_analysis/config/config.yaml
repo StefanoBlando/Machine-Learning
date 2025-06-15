@@ -1,0 +1,182 @@
+# Income Census Analysis Configuration
+
+# Data Configuration
+data:
+  raw_path: "data/raw/data.csv"
+  processed_path: "data/processed/"
+  train_size: 0.7
+  validation_size: 0.3
+  random_state: 123
+  stratify: true
+
+# Feature Engineering
+features:
+  # Features to drop as per project requirements
+  drop_columns: 
+    - "education"
+    - "native-country"
+  
+  # Target variable
+  target_column: "target"
+  
+  # Occupation categories mapping (combine into 5 categories)
+  occupation_mapping:
+    "Professional": 
+      - "Prof-specialty"
+      - "Exec-managerial"
+    "Service": 
+      - "Tech-support"
+      - "Other-service"
+      - "Protective-serv"
+      - "Priv-house-serv"
+    "Sales-Office": 
+      - "Sales"
+      - "Adm-clerical"
+    "Blue-Collar": 
+      - "Craft-repair"
+      - "Machine-op-inspct"
+      - "Transport-moving"
+      - "Handlers-cleaners"
+    "Other": 
+      - "Farming-fishing"
+      - "Armed-Forces"
+  
+  # Categorical columns for encoding
+  categorical_columns:
+    - "workclass"
+    - "marital-status"
+    - "occupation"
+    - "relationship"
+    - "race"
+    - "sex"
+  
+  # Numerical columns for scaling
+  numerical_columns:
+    - "age"
+    - "fnlwgt"
+    - "education-num"
+    - "capital-gain"
+    - "capital-loss"
+    - "hours-per-week"
+
+# Model Hyperparameters
+models:
+  random_forest:
+    param_grid:
+      n_estimators: [100, 200, 300, 500]
+      max_depth: [10, 20, 30, null]
+      min_samples_split: [2, 5, 10]
+      min_samples_leaf: [1, 2, 4]
+      max_features: ["sqrt", "log2", null]
+      bootstrap: [true, false]
+    cv_folds: 5
+    n_jobs: -1
+    random_state: 123
+  
+  gradient_boosting:
+    param_grid:
+      n_estimators: [100, 200, 300]
+      learning_rate: [0.01, 0.1, 0.2, 0.3]
+      max_depth: [3, 5, 7, 9]
+      min_samples_split: [2, 5, 10]
+      min_samples_leaf: [1, 2, 4]
+      subsample: [0.8, 0.9, 1.0]
+    cv_folds: 5
+    random_state: 123
+  
+  svm:
+    param_grid:
+      C: [0.1, 1, 10, 100]
+      kernel: ["rbf", "linear", "poly"]
+      gamma: ["scale", "auto", 0.001, 0.01, 0.1, 1]
+      degree: [2, 3, 4]  # Only for poly kernel
+      probability: [true]  # For ROC-AUC calculation
+    cv_folds: 5
+    random_state: 123
+  
+  logistic_regression:
+    param_grid:
+      C: [0.01, 0.1, 1, 10, 100]
+      penalty: ["l1", "l2", "elasticnet"]
+      solver: ["liblinear", "saga", "lbfgs"]
+      max_iter: [1000, 2000, 3000]
+      l1_ratio: [0.1, 0.3, 0.5, 0.7, 0.9]  # Only for elasticnet
+    cv_folds: 5
+    random_state: 123
+
+# Evaluation Configuration
+evaluation:
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1"
+    - "roc_auc"
+  
+  cv_folds: 5
+  
+  # Scoring metric for hyperparameter optimization
+  scoring: "roc_auc"
+  
+  # Cross-validation strategy
+  cv_strategy: "StratifiedKFold"
+  
+  # Feature importance analysis
+  feature_importance: true
+  
+  # SHAP analysis for model interpretability
+  shap_analysis: true
+
+# Visualization Configuration
+visualization:
+  figure_size: [12, 8]
+  dpi: 300
+  style: "whitegrid"
+  palette: "husl"
+  
+  # Plot configurations
+  confusion_matrix:
+    cmap: "Blues"
+    annot: true
+    fmt: "d"
+  
+  roc_curve:
+    figsize: [10, 8]
+    linewidth: 2
+  
+  feature_importance:
+    top_n: 20
+    figsize: [12, 10]
+
+# Output Configuration
+output:
+  # Model artifacts
+  models_path: "models/trained_models/"
+  scalers_path: "models/model_artifacts/"
+  
+  # Results
+  figures_path: "results/figures/"
+  reports_path: "results/reports/"
+  metrics_path: "results/metrics/"
+  
+  # File formats
+  model_format: "pkl"  # or "joblib"
+  figure_format: "png"
+  report_format: "html"
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/income_census_analysis.log"
+  
+# Parallel Processing
+parallel:
+  n_jobs: -1  # Use all available cores
+  backend: "loky"  # or "threading", "multiprocessing"
+
+# Random Seeds (for reproducibility)
+random_seeds:
+  numpy: 123
+  sklearn: 123
+  python: 123
