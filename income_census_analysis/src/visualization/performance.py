@@ -1,6 +1,6 @@
 """
 Detailed performance visualizations module.
-Estratto ESATTAMENTE dal MODULO 7 del notebook originale.
+
 """
 import pandas as pd
 import numpy as np
