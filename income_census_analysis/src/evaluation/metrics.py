@@ -1,6 +1,6 @@
 """
 Comprehensive evaluation metrics module.
-Estratto ESATTAMENTE dal MODULO 6 del notebook originale.
+
 """
 import numpy as np
 import pandas as pd
