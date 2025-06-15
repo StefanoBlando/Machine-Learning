@@ -1,6 +1,6 @@
 """
 Optuna optimization module.
-Estratto ESATTAMENTE dal MODULO 6B del notebook originale.
+
 """
 import numpy as np
 import pandas as pd
