@@ -1,6 +1,6 @@
 """
 Advanced feature engineering module.
-Estratto ESATTAMENTE dal MODULO 3 del notebook originale.
+
 """
 import pandas as pd
 import numpy as np
