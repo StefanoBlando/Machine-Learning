@@ -1,172 +1,152 @@
 # Income Census Analysis
 
-A binary classification project to predict whether an individual's income exceeds $50K based on census data using advanced machine learning techniques.
+A comprehensive machine learning project for binary classification to predict whether an individual's income exceeds $50K based on census data.
 
-## 🎯 Project Objective
+## 🎯 Project Overview
 
-Develop and compare multiple machine learning models to classify income levels using:
-- **Random Forest**
-- **Gradient Boosting** 
+This project implements and compares four different machine learning algorithms to classify income levels using demographic and employment data from the Adult Census dataset. The goal is to build robust predictive models and identify the most effective approach for income classification.
+
+## 🔬 Machine Learning Models
+
+- **Random Forest Classifier**
+- **Gradient Boosting Classifier** 
 - **Support Vector Machine (SVM)**
 - **Logistic Regression**
 
-## 📊 Dataset Overview
+Each model undergoes hyperparameter optimization to achieve optimal performance.
 
-- **Target Variable**: >50K, <=50K (income level)
-- **Features**: age, workclass, education, marital status, occupation, relationship, race, sex, capital gains/losses, hours per week, native country
-- **Total Records**: 32,561 observations
-- **Features**: 15 columns
+## 📊 Dataset Information
 
-### Key Preprocessing Steps:
-- Remove `education` and `native-country` columns
-- Combine occupation categories into 5 groups
-- Train/Validation split: 70%/30% (random_state=123)
-- Hyperparameter optimization for all models
+- **Target Variable**: Binary classification (>50K, <=50K)
+- **Features**: Age, work class, education level, marital status, occupation, relationship, race, gender, capital gain/loss, hours per week
+- **Data Split**: 70% training, 30% validation (random seed: 123)
+- **Preprocessing**: Feature engineering with occupation categories reduced to 5 main groups
 
-## 🚀 Quick Start
+## 🚀 Key Features
 
-### Prerequisites
-```bash
-Python 3.8+
-pip or conda package manager
-```
-
-### Installation
-```bash
-# Clone the repository
-git clone https://github.com/username/income_census_analysis.git
-cd income_census_analysis
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Or using conda
-conda env create -f environment.yml
-conda activate income-census-env
-```
-
-### Usage
-```bash
-# Run complete analysis pipeline
-python scripts/train_models.py
-
-# Run hyperparameter tuning
-python scripts/hyperparameter_tuning.py
-
-# Generate evaluation report
-python scripts/evaluate_models.py
-
-# Create visualizations
-python scripts/generate_report.py
-```
+- **Comprehensive EDA**: Detailed exploratory data analysis with visualizations
+- **Feature Engineering**: Strategic preprocessing and categorical variable handling
+- **Model Comparison**: Side-by-side performance evaluation of all algorithms
+- **Hyperparameter Tuning**: Systematic optimization using grid search
+- **Performance Metrics**: Accuracy, Precision, Recall, F1-Score, ROC-AUC
+- **Reproducible Results**: Fixed random seeds and version-controlled experiments
 
 ## 📁 Project Structure
 
 ```
 income_census_analysis/
-├── data/                    # Data files
-│   ├── raw/                # Original dataset
-│   ├── processed/          # Cleaned and processed data
-│   └── external/           # External data sources
+├── data/                    # Dataset storage
 ├── notebooks/              # Jupyter notebooks for analysis
 ├── src/                    # Source code modules
-│   ├── data/              # Data processing modules
-│   ├── models/            # Model implementations
-│   ├── evaluation/        # Evaluation metrics and visualization
-│   └── utils/             # Utility functions
-├── config/                 # Configuration files
 ├── models/                 # Trained model artifacts
-├── results/               # Output results and reports
-├── scripts/               # Executable scripts
-├── tests/                 # Unit tests
+├── results/               # Outputs and visualizations
+├── scripts/               # Automation scripts
+├── config/                # Configuration files
 └── docs/                  # Documentation
 ```
 
-## 🔬 Methodology
+## 🛠️ Installation & Setup
 
-### 1. Data Preprocessing
-- Handle missing values
-- Encode categorical variables
-- Feature scaling and normalization
-- Remove specified columns (education, native-country)
-- Combine occupation categories
+1. **Clone the repository**
+```bash
+git clone https://github.com/yourusername/income_census_analysis.git
+cd income_census_analysis
+```
 
-### 2. Model Training
-- Implement 4 different algorithms
-- Cross-validation for robust evaluation
-- Hyperparameter optimization using grid search
-- Model persistence and versioning
+2. **Install dependencies**
+```bash
+pip install -r requirements.txt
+```
 
-### 3. Evaluation
-- Comprehensive metrics: Accuracy, Precision, Recall, F1-Score, ROC-AUC
-- Confusion matrices and classification reports
+3. **Run the analysis**
+```bash
+python scripts/train_models.py
+```
+
+## 📈 Usage
+
+### Quick Start
+```python
+from src.models.model_trainer import ModelTrainer
+from src.data.preprocess import DataPreprocessor
+
+# Load and preprocess data
+preprocessor = DataPreprocessor()
+X_train, X_val, y_train, y_val = preprocessor.prepare_data()
+
+# Train models
+trainer = ModelTrainer()
+results = trainer.train_all_models(X_train, y_train, X_val, y_val)
+```
+
+### Jupyter Notebooks
+Explore the step-by-step analysis:
+1. `01_exploratory_data_analysis.ipynb` - Data exploration and visualization
+2. `02_data_preprocessing.ipynb` - Data cleaning and feature engineering
+3. `03_feature_engineering.ipynb` - Advanced feature creation
+4. `04_model_training.ipynb` - Model development and training
+5. `05_model_evaluation.ipynb` - Performance comparison and analysis
+6. `06_final_analysis.ipynb` - Results summary and insights
+
+## 📊 Results
+
+The project generates comprehensive performance comparisons including:
+- Cross-validation scores for all models
 - Feature importance analysis
-- Model comparison and selection
+- ROC curves and confusion matrices
+- Hyperparameter optimization results
+- Final model recommendations
 
-## 📈 Results
+Results are automatically saved to `results/reports/model_comparison.html`
 
-Model performance comparison and detailed analysis available in:
-- `results/reports/model_comparison.html`
-- `results/metrics/validation_results.json`
-- `notebooks/06_final_analysis.ipynb`
+## 🔧 Configuration
 
-## 🛠️ Development
+Model parameters and data processing options can be customized in `config/config.yaml`:
 
-### Running Tests
+```yaml
+data:
+  train_size: 0.7
+  random_state: 123
+  
+models:
+  random_forest:
+    n_estimators: [100, 200, 300]
+    max_depth: [10, 20, None]
+```
+
+## 🧪 Testing
+
+Run the test suite:
 ```bash
 pytest tests/
 ```
 
-### Code Quality
-```bash
-# Format code
-black src/ scripts/
-
-# Linting
-flake8 src/ scripts/
-```
-
-### Adding New Models
-1. Create new model class in `src/models/`
-2. Inherit from `BaseModel`
-3. Implement required methods
-4. Add configuration in `config/hyperparameters.yaml`
-5. Update training script
-
-## 📋 Requirements
+## 📚 Dependencies
 
 - Python 3.8+
-- scikit-learn 1.3.0+
-- pandas 2.0.0+
-- numpy 1.24.0+
-- matplotlib 3.7.0+
-- seaborn 0.12.0+
-- See `requirements.txt` for complete list
+- scikit-learn
+- pandas
+- numpy
+- matplotlib
+- seaborn
+- jupyter
+
+See `requirements.txt` for complete dependency list.
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/new-feature`)
+2. Create a feature branch (`git checkout -b feature/improvement`)
 3. Commit changes (`git commit -am 'Add new feature'`)
-4. Push to branch (`git push origin feature/new-feature`)
+4. Push to branch (`git push origin feature/improvement`)
 5. Create Pull Request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 📧 Contact
-
-**Author**: [Your Name]  
-**Email**: [your.email@example.com]  
-**GitHub**: [yourusername]
+This project is licensed under the GNU Affero General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- UCI Machine Learning Repository for the Adult dataset
-- scikit-learn community for excellent ML tools
-- Open source contributors
-
----
-
-*Built with ❤️ for machine learning education and research*
+- Adult Census dataset from UCI Machine Learning Repository
+- Scikit-learn community for excellent ML tools
+- Open source contributors who made this project possible
