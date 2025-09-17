@@ -7,6 +7,7 @@ The repository is structured to organize the project's code into modular compone
 ---
 
 ### Repository Structure
+
 /tim-recommender-system
 ├── notebooks/
 │   └── TIM ML LAB 1.ipynb
